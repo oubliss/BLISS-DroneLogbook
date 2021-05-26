@@ -1,6 +1,8 @@
 import setuptools
 from setuptools import setup
 
+# TODO - Autosetup of ~/.wxuas for keys
+
 setup(name='dronelogbook',
       version='0.0.1',
       description='Package for interacting with the DroneLogBook APII',

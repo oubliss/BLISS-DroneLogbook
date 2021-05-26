@@ -15,7 +15,7 @@ class DLB:
 
         """
         Initializes a DLB object
-        :param kwargs: Unless specified in ~/.cass-keys, `api_key` and `dlb_url` need to be specified in the kwargs
+        :param kwargs: Unless specified in ~/.wxuas/keys, `api_key` and `dlb_url` need to be specified in the kwargs
         :type kwargs:
         """
 
@@ -23,9 +23,9 @@ class DLB:
         if 'api_key' not in kwargs.keys() and 'dlb_url' not in kwargs.keys():
 
             try:
-                cred_fn = os.path.join(os.path.expanduser("~"), ".cass-keys")
+                cred_fn = os.path.join(os.path.expanduser("~"), ".wxuas/keys")
             except FileNotFoundError:
-                print(f".cass-keys file not found in {os.path.expanduser('~')}")
+                print(f".wxuas/keys file not found in {os.path.expanduser('~')}")
                 return
 
             with open(cred_fn, 'rb') as fh:
@@ -167,7 +167,7 @@ class DLB:
                 flight.drone = self.get_drone(flight.drone_guid)
                 flight.place = self.get_place(flight.place_guid)
                 flight.project = self.get_project(flight.project_guid)
-                flight.equiement = [self.get_equipment(guid) for guid in flight.equipment]
+                flight.equipment = [self.get_equipment(guid) for guid in flight.equipment]
 
             flights.append(flight)
 
@@ -194,10 +194,19 @@ class DLB:
 
     def get_project(self, guid):
 
-        if guid is None or guid == '':
-            return None
+        """
+        Retrieve and create a Project object from the corresponding guid
+        :param guid: guid of the desired Place
+        :type guid: str
+        :return: Project object
+        :rtype: dronelogbook.Project
+        """
 
-        return
+        response = requests.get(f'https://api.dronelogbook.com/project/{guid}', headers={"accept": "application/json",
+                                                                                         "ApiKey": self.dlb_api_key,
+                                                                                         "DlbUrl": self.dlb_url})
+        print(response)
+        return Project(response.json()['data'][0])
 
 
 class Flight:
