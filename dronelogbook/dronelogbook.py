@@ -4,7 +4,6 @@ import requests
 import json
 import os
 
-
 class DLB:
 
     """
@@ -85,6 +84,30 @@ class DLB:
                                                                                        "DlbUrl": self.dlb_url})
         return Drone(response.json()['data'][0])
 
+    def get_drones(self, page_num=1):
+
+        """
+        Retrieve and create a Drone object from the corresponding guid
+        :param guid: guid of the desired Drone
+        :type guid: str
+        :return: Drone object
+        :rtype: dronelogbook.Drone
+        """
+
+
+        response = requests.get(f'https://api.dronelogbook.com/drone?num_page={page_num}', headers={"accept": "application/json",
+                                                                                                    "ApiKey": self.dlb_api_key,
+                                                                                                    "DlbUrl": self.dlb_url})
+
+        data = response.json()
+        drones = [Drone(drone_data) for drone_data in data['data']]
+
+        # If there are more pages of drones, keep going through them
+        if data['has_more']:
+            drones += self.get_drones(page_num=page_num + 1)
+
+        return drones
+
     def get_equipment(self, guid=None):
 
         """
@@ -103,6 +126,30 @@ class DLB:
                                                                                            "DlbUrl": self.dlb_url})
         return Equipment(response.json()['data'][0])
 
+    def get_all_equipment(self, page_num=1):
+
+        """
+        Retrieve and create a Equipment object from the corresponding guid
+        :param guid: guid of the desired Equipemnt
+        :type guid: str
+        :return: Equipment object
+        :rtype: list
+        """
+
+
+        response = requests.get(f'https://api.dronelogbook.com/equipment?num_page={page_num}', headers={"accept": "application/json",
+                                                                                           "ApiKey": self.dlb_api_key,
+                                                                                           "DlbUrl": self.dlb_url})
+
+        data = response.json()
+        equipment = [Equipment(d) for d in data['data']]
+
+        # If there are more pages of drones, keep going through them
+        if data['has_more']:
+            equipment += self.get_all_equipment(page_num=page_num + 1)
+
+        return equipment
+
     def get_flight(self, guid, recursive=False):
 
         """
@@ -113,7 +160,7 @@ class DLB:
         in the flight
         :type recursive: bool
         :return:
-        :rtype:
+        :rtype: dronelogbook.Flight
         """
 
         if guid is None or guid == '':
@@ -148,7 +195,7 @@ class DLB:
         in the flight
         :type recursive:bool
         :return:
-        :rtype:
+        :rtype: list
         """
 
         flights = []
@@ -205,7 +252,7 @@ class DLB:
         response = requests.get(f'https://api.dronelogbook.com/project/{guid}', headers={"accept": "application/json",
                                                                                          "ApiKey": self.dlb_api_key,
                                                                                          "DlbUrl": self.dlb_url})
-        print(response)
+        print(response.json())
         return Project(response.json()['data'][0])
 
 
@@ -253,12 +300,17 @@ class Flight:
     def __gt__(self, other):
         return self.flight_time > other.flight_time
 
+    def __ge__(self, other):
+        return self.flight_time >= other.flight_time
+
     def __lt__(self, other):
         return self.flight_time < other.flight_time
 
+    def __le__(self, other):
+        return self.flight_time <= other.flight_time
+
     def __eq__(self, other):
         return self.flight_time == self.flight_time
-
 
 class Drone:
 
@@ -280,11 +332,18 @@ class Drone:
         """
 
         self.raw_data = data
+        self.name = data['name']
         self.guid = data['guid']
         self.brand = data['brand']
         self.model = data['model']
         self.id_number = data['identification_number']
         self.notes = data['notes'].split('\r\n')
+        self.sysid = None
+
+
+        for note in self.notes:
+            if 'SYSID_THISMAV' in note:
+                self.sysid = int(note.split(' ')[-1])
 
         return
 
@@ -305,6 +364,8 @@ class Place:
 
         self.name = data['name']
         self.address = data['address']
+
+        self.get_usgs_alt()
 
         return
 
@@ -343,6 +404,9 @@ class Equipment:
 
         if 'scoop' in self.name.lower():
             self.scoop = self.name.split(' ')[-1]
+        elif 'PH' in self.name:
+            self.scoop = None
+            self.type = 'battery'
 
         for note in self.notes:
 
