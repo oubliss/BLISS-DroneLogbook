@@ -337,13 +337,13 @@ class Drone:
         self.brand = data['brand']
         self.model = data['model']
         self.id_number = data['identification_number']
-        self.notes = data['notes'].split('\r\n')
+        self.notes = data['notes'].split('/\r\n')
         self.sysid = None
 
 
         for note in self.notes:
             if 'SYSID_THISMAV' in note:
-                self.sysid = int(note.split(' ')[-1])
+                self.sysid = int(note.split(':')[1])
 
         return
 
