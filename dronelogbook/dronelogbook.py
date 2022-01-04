@@ -252,8 +252,11 @@ class DLB:
         response = requests.get(f'https://api.dronelogbook.com/project/{guid}', headers={"accept": "application/json",
                                                                                          "ApiKey": self.dlb_api_key,
                                                                                          "DlbUrl": self.dlb_url})
-        print(response.json())
-        return Project(response.json()['data'][0])
+        # print(response.json())
+        try:
+            return Project(response.json()['data'][0])
+        except KeyError:
+            return None
 
 
 class Flight:
@@ -343,7 +346,10 @@ class Drone:
 
         for note in self.notes:
             if 'SYSID_THISMAV' in note:
-                self.sysid = int(note.split(':')[1])
+                try:
+                    self.sysid = int(note.split(':')[1])  # If there is no sysid, this should error
+                except ValueError:
+                    pass
 
         return
 
@@ -365,13 +371,14 @@ class Place:
         self.name = data['name']
         self.address = data['address']
 
-        self.get_usgs_alt()
+        # self.get_usgs_alt()
 
         return
 
     def get_usgs_alt(self):
 
         url = f'https://nationalmap.gov/epqs/pqs.php?x={self.longitude}&y={self.latitude}&units=Meters&output=json'
+        print(url)
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()['USGS_Elevation_Point_Query_Service']['Elevation_Query']
