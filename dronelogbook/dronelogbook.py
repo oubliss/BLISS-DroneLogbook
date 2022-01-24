@@ -407,7 +407,7 @@ class Equipment:
         self.raw_data = data
         self.name = data['name']
         self.type = data['equipment_type']
-        self.notes = data['notes'].split('\r\n')
+        self.notes = data['notes'].split('/')
 
         if 'scoop' in self.name.lower():
             self.scoop = self.name.split(' ')[-1]
@@ -418,12 +418,12 @@ class Equipment:
         for note in self.notes:
 
             if 'imet' in note.lower():
-                split = note.split(',')[1:]
+                split = note.split(':')[-1].split(',')
 
                 self.imet_sn = [id for id in split if id != ' ']
 
             if 'hyt' in note.lower():
-                split = note.split(',')[1:]
+                split = note.split(':')[-1].split(',')
 
                 self.hyt_sn = [id for id in split if id != ' ']
 
