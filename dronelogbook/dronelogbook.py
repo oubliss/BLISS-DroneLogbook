@@ -376,14 +376,13 @@ class Place:
         return
 
     def get_usgs_alt(self):
-
-        url = f'https://nationalmap.gov/epqs/pqs.php?x={self.longitude}&y={self.latitude}&units=Meters&output=json'
+        url = f'https://epqs.nationalmap.gov/v1/json?x={self.longitude}&y={self.latitude}&units=Meters&wkid=4326&includeDate=False'
         print(url)
         response = requests.get(url)
         if response.status_code == 200:
-            data = response.json()['USGS_Elevation_Point_Query_Service']['Elevation_Query']
+            data = response.json()
 
-            self.altitude = data['Elevation']
+            self.altitude = float(data['value'])
 
         else:
             print("Error in querying USGS")
